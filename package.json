@@ -1,6 +1,6 @@
 {
   "name": "module-auto-install",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "an auto installer for node packages as you code",
   "keywords": [
     "auto",
