@@ -3,7 +3,7 @@ const glob = require("glob");
 const detective = require("detective");
 const es6detective = require("detective-es6");
 const compiler = require("vue-template-compiler");
-const colors = require("colors/safe");
+const colors = require("colors");
 const ora = require("ora");
 const logSymbols = require("log-symbols");
 const argv = require("yargs").argv;
@@ -213,12 +213,15 @@ const startSpinner = (message, type) => {
 const stopSpinner = (spinner, message, type, notifyMode) => {
   spinner.stop();
   if (!message) return;
+
   let symbol;
-  if (type === "red") symbol = logSymbols.error;
-  else if (type === "yellow") symbol = logSymbols.warning;
-  else symbol = logSymbols.success;
+  if (type === "red") {
+    symbol = logSymbols.error;
+  } else if (type === "yellow") {
+    symbol = logSymbols.warning;
+  } else symbol = logSymbols.success;
   if (notifyMode) showNotification(message);
-  console.log(symbol, message);
+  console.log(symbol, message.type);
 };
 
 /* Get install command
@@ -256,18 +259,13 @@ const installModule = ({ name, dev }, notifyMode) => {
 
   const command = getInstallCommand(name, dev);
 
-  let message = `${name} ${colors.green("installed")}`;
+  let message = `${name} "installed"`;
   if (dev) message += " in devDependencies";
 
   const success = runCommand(command);
   if (success) stopSpinner(spinner, message, "green", notifyMode);
   else
-    stopSpinner(
-      spinner,
-      `${name} ${colors.yellow("installation failed")}`,
-      "yellow",
-      notifyMode
-    );
+    stopSpinner(spinner, `${name} "installation failed"`, "yellow", notifyMode);
 };
 
 /* is scoped module? */
@@ -317,9 +315,6 @@ const uninstallModule = ({ name, dev }, notifyMode) => {
   runCommand(command);
   stopSpinner(spinner, message, "red", notifyMode);
 };
-
-// installModule({ name: "eyram", dev: false });
-// uninstallModule({ name: "log-symbols", dev: false });
 
 /* Remove built in/native modules */
 
@@ -379,8 +374,6 @@ const showNotification = (message) => {
   notifier.notify({
     title: "auto-install",
     message: message,
-    open: void 0,
-    wait: false,
   });
 };
 
