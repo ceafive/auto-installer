@@ -12,8 +12,6 @@ const packageJson = require("package-json");
 const isBuiltInModule = require("is-builtin-module");
 const notifier = require("node-notifier");
 
-require("@babel/polyfill");
-
 /* File reader
  * Return contents of given file
  */
