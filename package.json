@@ -1,0 +1,32 @@
+{
+  "name": "apis",
+  "version": "1.0.0",
+  "description": "an auto installer for node packages",
+  "repository": "github.com/ceafive",
+  "main": "first_request.js",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "chokidar": "^3.3.1",
+    "colors": "^1.4.0",
+    "detective": "^5.2.0",
+    "detective-es6": "^2.1.0",
+    "glob": "^7.1.6",
+    "is-builtin-module": "^3.0.0",
+    "log-symbols": "^3.0.0",
+    "ora": "^4.0.3",
+    "package-json": "^6.5.0",
+    "undefined": "^0.1.0",
+    "vue-template-compiler": "^2.6.11",
+    "yargs": "^15.3.1"
+  },
+  "devDependencies": {
+    "jest": "^25.2.7"
+  },
+  "scripts": {
+    "noderun": "node request",
+    "example": "node example",
+    "nodemon": "nodemon request"
+  },
+  "author": "",
+  "license": "ISC"
+}
