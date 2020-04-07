@@ -1,4 +1,4 @@
-const fs = require("fs");
+import fs from "fs";
 const glob = require("glob");
 const detective = require("detective");
 const es6detective = require("detective-es6");

@@ -5,7 +5,6 @@
   "repository": "github.com/ceafive",
   "main": "first_request.js",
   "dependencies": {
-    "child_process": "^1.0.2",
     "chokidar": "^3.3.1",
     "colors": "^1.4.0",
     "detective": "^5.2.0",
@@ -15,17 +14,19 @@
     "log-symbols": "^3.0.0",
     "ora": "^4.0.3",
     "package-json": "^6.5.0",
-    "undefined": "^0.1.0",
     "vue-template-compiler": "^2.6.11",
     "yargs": "^15.3.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
     "jest": "^25.2.7"
   },
   "scripts": {
-    "noderun": "node request",
-    "example": "node example",
-    "nodemon": "nodemon request"
+    "build": "babel src -d lib",
+    "noderun": "node src/helpers",
+    "nodemon": "nodemon src/helpers"
   },
   "author": "",
   "license": "ISC"
