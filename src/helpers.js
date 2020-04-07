@@ -1,4 +1,4 @@
-import fs from "fs";
+const fs = require("fs");
 const glob = require("glob");
 const detective = require("detective");
 const es6detective = require("detective-es6");
@@ -10,12 +10,14 @@ const argv = require("yargs").argv;
 const { execSync } = require("child_process");
 const packageJson = require("package-json");
 const isBuiltInModule = require("is-builtin-module");
-const https = require("https");
+const notifier = require("node-notifier");
+
+require("@babel/polyfill");
 
 /* File reader
  * Return contents of given file
  */
-let readFile = (path) => {
+const readPackageJson = (path) => {
   const content = fs.readFileSync(path, "utf8");
   return content;
 };
@@ -24,8 +26,8 @@ let readFile = (path) => {
  * Read dependencies array from package.json
  */
 
-let getInstalledModules = () => {
-  const content = JSON.parse(readFile("package.json"));
+const getInstalledModules = () => {
+  const content = JSON.parse(readPackageJson("package.json"));
   const installedModules = [];
 
   const dependencies = content.dependencies || {};
@@ -51,16 +53,15 @@ let getInstalledModules = () => {
  */
 const getFilesPath = () => {
   const path1 = glob.sync("**/*.js", { ignore: ["node_modules/**/*"] });
-  // const path4 = glob.sync("./package/*.ts", { ignore: ["node_modules/**/*"] });
+  // const path4 = glob.sync("**/*.ts", { ignore: ["node_modules/**/*"] });
   const path2 = glob.sync("**/*.jsx", { ignore: ["node_modules/**/*"] });
   const path3 = glob.sync("**/*.vue", { ignore: ["node_modules/**/*"] });
-  // return path4;
   return path1.concat(path2, path3);
 };
 
 /* Check for valid string - to stop malicious intentions */
 
-let isValidModule = (name) => {
+const isValidModule = (name) => {
   // let regex = new RegExp("^([a-z0-9-_]{1,})$");
   let regex = new RegExp("^([@a-z0-9-_/]{1,})$");
   return regex.test(name);
@@ -104,7 +105,7 @@ const getModulesFromFile = (path) => {
  * [.spec.js, .test.js] are supported test file formats
  */
 
-let isTestFile = (name) =>
+const isTestFile = (name) =>
   name.endsWith(".spec.js") || name.endsWith(".test.js");
 
 /* Dedup similar modules
@@ -112,7 +113,7 @@ let isTestFile = (name) =>
  * Ignores/assumes type of the modules in list
  */
 
-let deduplicateSimilarModules = (modules) => {
+const deduplicateSimilarModules = (modules) => {
   let dedupedModules = [];
   let dedupedModuleNames = [];
 
@@ -131,7 +132,7 @@ let deduplicateSimilarModules = (modules) => {
  * Deduplicates each list
  */
 
-let deduplicate = (modules) => {
+const deduplicate = (modules) => {
   let dedupedModules = [];
   //push 'dev' dependecies into array
   let testModules = modules.filter((module) => module.dev);
@@ -173,7 +174,7 @@ const getUsedModules = () => {
  * Pretty error message for common errors
  */
 
-let handleError = (err) => {
+const handleError = (err) => {
   if (err.includes("E404")) {
     console.log(colors.yellow("Module is not in the npm registry."), err);
   } else if (err.includes("ENOTFOUND")) {
@@ -188,7 +189,7 @@ let handleError = (err) => {
  * Run a given command
  */
 
-let runCommand = (command) => {
+const runCommand = (command) => {
   let succeeded = true;
   try {
     execSync(command, { encoding: "utf8" });
@@ -203,7 +204,7 @@ let runCommand = (command) => {
  * Use ora spinners to show what's going on
  */
 
-let startSpinner = (message, type) => {
+const startSpinner = (message, type) => {
   const spinner = ora();
   spinner.text = message;
   spinner.color = type;
@@ -211,42 +212,15 @@ let startSpinner = (message, type) => {
   return spinner;
 };
 
-let stopSpinner = (spinner, message, type) => {
+const stopSpinner = (spinner, message, type, notifyMode) => {
   spinner.stop();
   if (!message) return;
   let symbol;
   if (type === "red") symbol = logSymbols.error;
   else if (type === "yellow") symbol = logSymbols.warning;
   else symbol = logSymbols.success;
+  if (notifyMode) showNotification(message);
   console.log(symbol, message);
-};
-
-/* Is module popular? - for secure mode */
-
-const POPULARITY_THRESHOLD = 10000;
-const isModulePopular = (name, callback) => {
-  const spinner = startSpinner(`Checking ${name}`, "yellow");
-  const url = `https://api.npmjs.org/downloads/point/last-month/${name}`;
-  https
-    .get(url)
-    .then((response) => {
-      let body = "";
-      response.on("data", (data) => {
-        body += data;
-      });
-
-      response.on("end", () => {
-        stopSpinner(spinner);
-        const downloads = JSON.parse(body).downloads;
-        callback(downloads > POPULARITY_THRESHOLD);
-      });
-    })
-    .catch((error) => {
-      console.log(
-        colors.red("Could not connect to npm, check your internet connection!"),
-        error
-      );
-    });
 };
 
 /* Get install command
@@ -276,7 +250,7 @@ const getInstallCommand = (name, dev) => {
  * Install given module
  */
 
-const installModule = ({ name, dev }) => {
+const installModule = ({ name, dev }, notifyMode) => {
   const spinner = startSpinner(
     `${colors.green("Installing")} ${name}\n`,
     "green"
@@ -288,50 +262,31 @@ const installModule = ({ name, dev }) => {
   if (dev) message += " in devDependencies";
 
   const success = runCommand(command);
-  if (success) stopSpinner(spinner, message, "green");
+  if (success) stopSpinner(spinner, message, "green", notifyMode);
   else
     stopSpinner(
       spinner,
       `${name} ${colors.yellow("installation failed")}`,
-      "yellow"
+      "yellow",
+      notifyMode
     );
 };
 
 /* is scoped module? */
 
-let isScopedModule = (name) => name[0] === "@";
+const isScopedModule = (name) => name[0] === "@";
 
-/* Install module if author is trusted */
+/* Install module if scoped ie. begins with @ */
 
-let installModuleIfTrustedAuthor = ({ name, dev }) => {
-  let trustedAuthor = argv["trust-author"];
-  packageJson(name).then((json) => {
-    if (json.author && json.author.name === trustedAuthor) {
-      installModule({ name, dev });
-    } else console.log(colors.red(`${name} not trusted`));
-  });
-};
-
-/* Install module if trusted
- * Call isModulePopular before installing
- */
-
-let installModuleIfTrusted = async ({ name, dev }) => {
-  // Trust scoped modules
+const installModulesandScopedModules = ({ name, dev }, notifyMode) => {
+  // Check and install scoped modules found in npm registry
   if (isScopedModule(name)) {
     packageJson(name)
-      .then(() => installModule({ name, dev }))
+      .then(() => installModule({ name, dev }, notifyMode))
       .catch((e) => handleError(e.name));
   } else {
-    isModulePopular(name, (popular) => {
-      // Popular as proxy for trusted
-      if (popular) installModule({ name, dev });
-      // Trusted Author
-      else if (argv["trust-author"])
-        installModuleIfTrustedAuthor({ name, dev });
-      // Not trusted
-      else console.log(colors.red(`${name} not trusted`));
-    });
+    //install modules found in npm registry
+    installModule({ name, dev }, notifyMode);
   }
 };
 
@@ -340,7 +295,7 @@ let installModuleIfTrusted = async ({ name, dev }) => {
  * Depends on package manager
  */
 
-let getUninstallCommand = (name) => {
+const getUninstallCommand = (name) => {
   let packageManager = "npm";
   if (argv.yarn) packageManager = "yarn";
 
@@ -354,7 +309,7 @@ let getUninstallCommand = (name) => {
 
 /* Uninstall module */
 
-const uninstallModule = ({ name, dev }) => {
+const uninstallModule = ({ name, dev }, notifyMode) => {
   if (dev) return;
 
   const command = getUninstallCommand(name);
@@ -362,7 +317,7 @@ const uninstallModule = ({ name, dev }) => {
 
   const spinner = startSpinner(`${colors.red("Uninstalling")} ${name}`, "red");
   runCommand(command);
-  stopSpinner(spinner, message, "red");
+  stopSpinner(spinner, message, "red", notifyMode);
 };
 
 // installModule({ name: "eyram", dev: false });
@@ -370,14 +325,14 @@ const uninstallModule = ({ name, dev }) => {
 
 /* Remove built in/native modules */
 
-let removeBuiltInModules = (modules) =>
+const removeBuiltInModules = (modules) =>
   modules.filter((module) => !isBuiltInModule(module.name));
 
 /* Remove file paths from module names
  * Example: convert `colors/safe` to `colors`
  */
 
-let removeFilePaths = (modules) => {
+const removeFilePaths = (modules) => {
   for (let module of modules) {
     let slicedName = module.name.split("/")[0];
     if (slicedName.substr(0, 1) !== "@") module.name = slicedName;
@@ -387,23 +342,23 @@ let removeFilePaths = (modules) => {
 
 /* Filter registry modules */
 
-let filterRegistryModules = (modules) =>
+const filterRegistryModules = (modules) =>
   removeBuiltInModules(removeFilePaths(modules));
 
 /* Get module names from array of module objects */
 
-let getNamesFromModules = (modules) => modules.map((module) => module.name);
+const getNamesFromModules = (modules) => modules.map((module) => module.name);
 
 /* Modules diff */
 
-let diff = (first, second) => {
+const diff = (first, second) => {
   let namesFromSecond = getNamesFromModules(second);
   return first.filter((module) => !namesFromSecond.includes(module.name));
 };
 
 /* Reinstall modules */
 
-let cleanup = () => {
+const cleanup = () => {
   let spinner = startSpinner("Cleaning up", "green");
   if (argv.yarn) runCommand("yarn");
   else runCommand("npm install");
@@ -416,19 +371,31 @@ let cleanup = () => {
  *     removing unused modules
  */
 
-let packageJSONExists = () => fs.existsSync("package.json");
+const packageJSONExists = () => fs.existsSync("package.json");
 
 /* Public helper functions */
 
+/* Display Notifications */
+
+var showNotification = function showNotification(message) {
+  notifier.notify({
+    title: "auto-install",
+    message: message,
+    open: void 0,
+    wait: false,
+  });
+};
+
 module.exports = {
+  isValidModule,
   getFilesPath,
   getInstalledModules,
   getUsedModules,
   filterRegistryModules,
-  installModule,
-  installModuleIfTrusted,
+  installModulesandScopedModules,
   uninstallModule,
   diff,
   cleanup,
   packageJSONExists,
+  showNotification,
 };

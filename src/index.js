@@ -1,30 +1,16 @@
 const helpers = require("./helpers");
-const chokidar = require("chokidar");
 const colors = require("colors");
 const argv = require("yargs").argv;
-
-let watchersInitialized = false;
-let main;
-
-/* Secure mode */
-
-let secureMode = false;
-if (argv.secure) secureMode = true;
 
 let uninstallMode = true;
 if (argv["dont-uninstall"]) uninstallMode = false;
 
+let notifyMode = false;
+if (argv["notify"]) notifyMode = true;
+
 /* Watch files and repeat drill
  * Add a watcher, call main wrapper to repeat cycle
  */
-
-let initializeWatchers = () => {
-  let watcher = chokidar.watch(helpers.getFilesPath());
-  watcher.on("change", main).on("unlink", main);
-
-  watchersInitialized = true;
-  console.log("Watchers initialized");
-};
 
 /* Main wrapper
  * Get installed modules from package.json
@@ -34,7 +20,7 @@ let initializeWatchers = () => {
  * After setup, initialize watchers
  */
 
-main = () => {
+const main = () => {
   if (!helpers.packageJSONExists()) {
     console.log(colors.red("package.json does not exist"));
     console.log(colors.red("You can create one by using `npm init`"));
@@ -51,20 +37,19 @@ main = () => {
 
   if (uninstallMode) {
     let unusedModules = helpers.diff(installedModules, usedModules);
-    for (let module of unusedModules) helpers.uninstallModule(module);
+    for (let module of unusedModules)
+      helpers.uninstallModule(module, notifyMode);
   }
 
   // installModules
 
-  let modulesNotInstalled = helpers.diff(usedModules, installedModules);
+  const modulesNotInstalled = helpers.diff(usedModules, installedModules);
   for (let module of modulesNotInstalled) {
-    if (secureMode) helpers.installModuleIfTrusted(module);
-    else helpers.installModule(module);
+    helpers.installModulesandScopedModules(module, notifyMode);
   }
 
   helpers.cleanup();
-  if (!watchersInitialized) initializeWatchers();
+  // if (!watchersInitialized) initializeWatchers();
 };
 
-/* Turn the key */
-main();
+module.exports = main;
