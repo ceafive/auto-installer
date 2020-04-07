@@ -5,13 +5,15 @@ Status](https://api.travis-ci.org/ceafive/module-auto-install.svg?branch=master)
 [![npm](https://img.shields.io/npm/v/module-auto-install.svg?maxAge=3600)](https://www.npmjs.com/package/module-auto-install)
 [![npm](https://img.shields.io/npm/dt/module-auto-install.svg?maxAge=3600)](https://www.npmjs.com/package/module-auto-install)
 
-Auto installs dependencies as you code.
+Auto installs dependencies as you code. Just hit save (CTRL + S)
 
 ![Auto installs dependencies as you code](https://raw.githubusercontent.com/ceafive/module-auto-install/master/demo.gif)
 
 #### Install
 
-`npm install -g module-auto-install`
+Install globally with `npm install -g module-auto-install`
+
+Recommended. Do not install per project as it will uninstall itself
 
 #### Usage
 
@@ -26,6 +28,8 @@ Modules in `.spec.js` and `.test.js` are added to `devDependencies`
 `--dont-uninstall` Do not uninstall unused modules
 
 `--yarn` Use [yarn](https://yarnpkg.com) instead of npm
+
+`--notify` Enable notifications for when dependencies are installed or uninstalled
 
 #### Show your support
 
