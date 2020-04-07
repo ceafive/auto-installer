@@ -1,10 +1,5 @@
 #### module-auto-install
 
-[![Build
-Status](https://api.travis-ci.org/ceafive/module-auto-install.svg?branch=master)](https://travis-ci.org/ceafive/module-auto-install)
-[![npm](https://img.shields.io/npm/v/module-auto-install.svg?maxAge=3600)](https://www.npmjs.com/package/module-auto-install)
-[![npm](https://img.shields.io/npm/dt/module-auto-install.svg?maxAge=3600)](https://www.npmjs.com/package/module-auto-install)
-
 Auto installs dependencies as you code. Just hit save (CTRL + S)
 
 ![Auto installs dependencies as you code](https://raw.githubusercontent.com/ceafive/module-auto-install/master/demo.gif)
