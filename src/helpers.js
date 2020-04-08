@@ -221,7 +221,7 @@ const stopSpinner = (spinner, message, type, notifyMode) => {
     symbol = logSymbols.warning;
   } else symbol = logSymbols.success;
   if (notifyMode) showNotification(message);
-  console.log(symbol, message.type);
+  console.log(symbol, `${colors.type(message)}`);
 };
 
 /* Get install command
