@@ -374,6 +374,8 @@ const showNotification = (message) => {
   notifier.notify({
     title: "auto-install",
     message: message,
+    open: 0,
+    wait: false,
   });
 };
 
