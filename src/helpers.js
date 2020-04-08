@@ -190,7 +190,8 @@ const handleError = (err) => {
 const runCommand = (command) => {
   let succeeded = true;
   try {
-    execSync(command, { encoding: "utf8" });
+    const output = execSync(command, { encoding: "utf8" });
+    console.log(output);
   } catch (error) {
     succeeded = false;
     handleError(error["stderr"]);
