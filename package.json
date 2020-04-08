@@ -1,5 +1,5 @@
 {
-  "name": "module-auto-install",
+  "name": "auto-installer",
   "version": "1.0.5",
   "description": "an auto installer for node packages as you code",
   "keywords": [
@@ -9,8 +9,8 @@
     "package",
     "watch"
   ],
-  "homepage": "https://github.com/ceafive/module-auto-install#readme",
-  "repository": "https://github.com/ceafive/module-auto-install",
+  "homepage": "https://github.com/ceafive/auto-installer#readme",
+  "repository": "https://github.com/ceafive/auto-installer",
   "license": "MIT",
   "main": "src/index.js",
   "bin": "lib/index.js",
