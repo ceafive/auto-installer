@@ -32,4 +32,4 @@ Modules in `.spec.js` and `.test.js` are added to `devDependencies`
 
 #### License
 
-MIT © [ceafive](https://github.com/ceafive)
+MIT © [ceafive](https://github.com/ceafive) :heart:
