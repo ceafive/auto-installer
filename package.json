@@ -22,9 +22,6 @@
     "noderun": "node src/helpers",
     "nodemon": "nodemon src/helpers"
   },
-  "engines": {
-    "node": ">= 4.4.5"
-  },
   "dependencies": {
     "chokidar": "2.0.0",
     "colors": "1.1.2",
