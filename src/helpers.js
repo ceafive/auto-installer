@@ -214,6 +214,9 @@ const stopSpinner = (spinner, message, type, notifyMode) => {
   spinner.stop();
   if (!message) return;
 
+  //set color of stop spinner message below
+  colors.setTheme({ color: type });
+
   let symbol;
   if (type === "red") {
     symbol = logSymbols.error;
@@ -221,7 +224,7 @@ const stopSpinner = (spinner, message, type, notifyMode) => {
     symbol = logSymbols.warning;
   } else symbol = logSymbols.success;
   if (notifyMode) showNotification(message);
-  console.log(symbol, `${colors.type(message)}`);
+  console.log(symbol, `${message.color}`);
 };
 
 /* Get install command
@@ -259,13 +262,13 @@ const installModule = ({ name, dev }, notifyMode) => {
 
   const command = getInstallCommand(name, dev);
 
-  let message = `${name} "installed"`;
-  if (dev) message += " in devDependencies";
+  let message = `${name} installed`;
+  if (dev) message += ` in devDependencies`;
 
   const success = runCommand(command);
   if (success) stopSpinner(spinner, message, "green", notifyMode);
   else
-    stopSpinner(spinner, `${name} "installation failed"`, "yellow", notifyMode);
+    stopSpinner(spinner, `${name} installation failed`, "yellow", notifyMode);
 };
 
 /* is scoped module? */
@@ -309,7 +312,7 @@ const uninstallModule = ({ name, dev }, notifyMode) => {
   if (dev) return;
 
   const command = getUninstallCommand(name);
-  const message = `${name} ${colors.red("removed")}`;
+  const message = `${name} removed`;
 
   const spinner = startSpinner(`${colors.red("Uninstalling")} ${name}`, "red");
   runCommand(command);
