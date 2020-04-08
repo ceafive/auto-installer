@@ -34,7 +34,6 @@
     "node-notifier": "^6.0.0",
     "ora": "0.3.0",
     "package-json": "2.4.0",
-    "request": "^2.88.2",
     "vue-template-compiler": "^2.6.11",
     "yargs": "6.3.0"
   },
