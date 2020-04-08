@@ -25,7 +25,7 @@ let initializeWatchers = () => {
   watcher.on("change", main).on("unlink", main);
 
   watchersInitialized = true;
-  console.log("Watchers initialized");
+  console.log(colors.green("Watchers initialized"));
 };
 
 /* Main wrapper

@@ -355,7 +355,7 @@ const diff = (first, second) => {
 /* Reinstall modules */
 
 const cleanup = () => {
-  let spinner = startSpinner("Cleaning up\n", "green");
+  let spinner = startSpinner(colors.yellow("Cleaning up\n"), "green");
   if (argv.yarn) runCommand("yarn");
   else runCommand("npm install");
   stopSpinner(spinner);
@@ -375,10 +375,11 @@ const packageJSONExists = () => fs.existsSync("package.json");
 
 const showNotification = (message) => {
   notifier.notify({
-    title: "auto-install",
+    title: "auto-installer running",
     message: message,
     open: 0,
     wait: false,
+    sound: "Pop",
   });
 };
 

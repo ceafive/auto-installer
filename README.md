@@ -1,4 +1,4 @@
-#### auto-installer
+# auto-installer
 
 Auto installs dependencies as you code. Just hit save (CTRL + S)
 
@@ -6,9 +6,9 @@ Auto installs dependencies as you code. Just hit save (CTRL + S)
 
 #### Install
 
-Install globally with `npm install -g auto-installer`
+Install globally with `npm install -g auto-installer`. **Recommended.**
 
-Recommended. Do not install per project as it will uninstall itself
+Do not install per project as it will uninstall itself
 
 #### Usage
 
@@ -33,7 +33,3 @@ Modules in `.spec.js` and `.test.js` are added to `devDependencies`
 #### License
 
 MIT © [ceafive](https://github.com/ceafive)
-
-#### Sponsor
-
-[![Sponsor](https://app.codesponsor.io/embed/LhLT2c31ydJzdLUuSR9f8mCA/ceafive/auto-installer.svg)](https://app.codesponsor.io/link/LhLT2c31ydJzdLUuSR9f8mCA/ceafive/auto-installer)
