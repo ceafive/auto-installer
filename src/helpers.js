@@ -1,16 +1,17 @@
 const fs = require("fs");
 const glob = require("glob");
-const detective = require("detective");
-const es6detective = require("detective-es6");
 const compiler = require("vue-template-compiler");
 const colors = require("colors");
-const ora = require("ora");
-const logSymbols = require("log-symbols");
 const argv = require("yargs").argv;
-const { execSync } = require("child_process");
 const packageJson = require("package-json");
 const isBuiltInModule = require("is-builtin-module");
 const notifier = require("node-notifier");
+const whichpm = require("which-pm");
+const execa = require("execa");
+const Listr = require("listr");
+
+const detective = require("./detective");
+require("../node_modules/regenerator-runtime/runtime");
 
 /* File reader
  * Return contents of given file
@@ -77,26 +78,24 @@ const getModulesFromFile = (path) => {
   else output = content;
 
   // return output;
-  let modules = [];
+  let allModules = [];
+
+  //set options for babel parser used in detective module
+  const detectiveOptions = {
+    sourceType: "module",
+    errorRecovery: true,
+    allowImportExportEverywhere: true,
+  };
   try {
-    //set options for acorn.js used in detective module
-    const detectiveOptions = { parse: { sourceType: "module" } };
-
-    //sniff file for commonJS require statements
-    modules = detective(output, detectiveOptions);
-
     //sniff file for ES6 import statements
-    const es6modules = es6detective(output, detectiveOptions);
-
-    modules = modules.concat(es6modules);
-
-    // return modules;
-    modules = modules.filter((module) => isValidModule(module));
+    allModules = detective(output, detectiveOptions);
   } catch (err) {
-    console.log(err);
+    if (err.includes) handleError(err);
   }
 
-  return modules;
+  // return filtered modules;
+  allModules = allModules.filter((module) => isValidModule(module));
+  return allModules;
 };
 
 /* Is test file?
@@ -155,7 +154,7 @@ const getUsedModules = () => {
   let usedModules = [];
   //loop through returned 'filesPath' array
   for (const filePath of filesPath) {
-    // Sniff files matching filepath for modules in file
+    // Sniff each file for modules used in file
     let modulesFromFile = getModulesFromFile(filePath);
     //check and set set 'dev' key on file extenstion matching ".test.js" or ".spec.js"
     const dev = isTestFile(filePath);
@@ -166,110 +165,109 @@ const getUsedModules = () => {
   return usedModules;
 };
 
-// console.log(getUsedModules());
-
 /* Handle error
  * Pretty error message for common errors
  */
 
-const handleError = (err) => {
-  if (err.includes("E404")) {
-    console.log(colors.yellow("Module is not in the npm registry."), err);
-  } else if (err.includes("ENOTFOUND")) {
+const handleError = (err, moduleName = "") => {
+  if (typeof err === "string" && err.includes("E404")) {
     console.log(
-      colors.red("Could not connect to npm, check your internet connection!"),
-      err
+      colors.yellow(`${colors.green(moduleName)} is not in the npm registry.`)
     );
-  } else console.log(colors.red("error ===>", err));
+  } else if (typeof err === "string" && err.includes("ENOTFOUND")) {
+    console.log(
+      colors.red("Could not connect to npm, check your internet connection!")
+    );
+  } else {
+    console.log("Error", `${colors.red(err)}`);
+  }
+};
+
+/* Get package manager used
+ *
+ */
+const whichPackageManager = async () => {
+  try {
+    const res = await whichpm(process.cwd());
+    return res.name;
+  } catch (err) {
+    handleError(err);
+  }
+};
+
+/* Get install command
+ * Depends on package manager, dev and exact
+ */
+
+const getInstallCommand = async (name, dev) => {
+  const cmd = await whichPackageManager();
+
+  let args;
+  if (cmd === "npm" || cmd === "pnpm") {
+    args = [`install`, `${name}`, `--save`];
+    if (dev) {
+      args.pop();
+      args.push(`--save-dev`);
+    }
+    if (argv.exact) args.push(`--save-exact`);
+  } else if (cmd === "yarn") {
+    args = [`add`, `${name}`];
+    if (dev) args.push(`--dev`);
+    // yarn always adds exact
+  }
+  return args;
 };
 
 /* Command runner
  * Run a given command
  */
 
-const runCommand = (command) => {
-  let succeeded = true;
+const runCommand = async (args, moduleName, notifyMode) => {
+  const cmd = await whichPackageManager();
+  let message = `${moduleName} installed`;
+
+  const found = args.find(
+    (e) => e.includes("uninstall") || e.includes("remove")
+  );
+  if (found) message = `${moduleName} removed`;
+
   try {
-    const output = execSync(command, { encoding: "utf8" });
-    console.log(output);
-  } catch (error) {
-    succeeded = false;
-    handleError(error["stderr"]);
+    execa.sync(cmd, args);
+    if (notifyMode) showNotification(message);
+  } catch (err) {
+    if (notifyMode) showNotification(`Error installing ${moduleName}`);
+    handleError(err.stderr, moduleName);
   }
-  return succeeded;
 };
 
-/* Show pretty outputs
- * Use ora spinners to show what's going on
+/* Instantiate Listr task runner
+ * Install/Uninstall given module
  */
 
-const startSpinner = (message, type) => {
-  const spinner = ora();
-  spinner.text = message;
-  spinner.color = type;
-  spinner.start();
-  return spinner;
-};
+const taskRunner = (args, name, message, notifyMode) => {
+  const tasks = new Listr([
+    {
+      title: `${message} `,
+      task: () => {
+        runCommand(args, name, notifyMode);
+      },
+    },
+  ]);
 
-const stopSpinner = (spinner, message, type, notifyMode) => {
-  spinner.stop();
-  if (!message) return;
-
-  //set color of stop spinner message below
-  colors.setTheme({ color: type });
-
-  let symbol;
-  if (type === "red") {
-    symbol = logSymbols.error;
-  } else if (type === "yellow") {
-    symbol = logSymbols.warning;
-  } else symbol = logSymbols.success;
-  if (notifyMode) showNotification(message);
-  console.log(symbol, `${message.color}`);
-};
-
-/* Get install command
- *
- * Depends on package manager, dev and exact
- */
-
-const getInstallCommand = (name, dev) => {
-  let packageManager = "npm";
-  if (argv.yarn) packageManager = "yarn";
-
-  let command;
-
-  if (packageManager === "npm") {
-    command = `npm install ${name} --save`;
-    if (dev) command += "-dev";
-    if (argv.exact) command += " --save-exact";
-  } else if (packageManager === "yarn") {
-    command = `yarn add ${name}`;
-    if (dev) command += " --dev";
-    // yarn always adds exact
-  }
-  return command;
+  tasks.run().catch((err) => {
+    return handleError(err.stderr);
+  });
 };
 
 /* Install module
  * Install given module
  */
 
-const installModule = ({ name, dev }, notifyMode) => {
-  const spinner = startSpinner(
-    `${colors.green("Installing")} ${name}\n`,
-    "green"
-  );
+const installModule = async ({ name, dev }, notifyMode) => {
+  const args = await getInstallCommand(name, dev);
+  const message = `Installing ${colors.green(name)}`;
 
-  const command = getInstallCommand(name, dev);
-
-  let message = `${name} installed`;
-  if (dev) message += ` in devDependencies`;
-
-  const success = runCommand(command);
-  if (success) stopSpinner(spinner, message, "green", notifyMode);
-  else
-    stopSpinner(spinner, `${name} installation failed`, "yellow", notifyMode);
+  taskRunner(args, name, message, notifyMode);
 };
 
 /* is scoped module? */
@@ -278,7 +276,7 @@ const isScopedModule = (name) => name[0] === "@";
 
 /* Install module if scoped ie. begins with @ */
 
-const installModulesandScopedModules = ({ name, dev }, notifyMode) => {
+const installModules = ({ name, dev }, notifyMode) => {
   // Check and install scoped modules found in npm registry
   if (isScopedModule(name)) {
     packageJson(name)
@@ -295,29 +293,25 @@ const installModulesandScopedModules = ({ name, dev }, notifyMode) => {
  * Depends on package manager
  */
 
-const getUninstallCommand = (name) => {
-  let packageManager = "npm";
-  if (argv.yarn) packageManager = "yarn";
+const getUninstallCommand = async (name) => {
+  const cmd = await whichPackageManager();
 
-  let command;
+  let args;
+  if (cmd === "npm" || cmd === "pnpm")
+    args = [`uninstall`, `${name}`, `--save`];
+  else if (cmd === "yarn") args = [`remove`, `${name}`];
 
-  if (packageManager === "npm") command = `npm uninstall ${name} --save`;
-  else if (packageManager === "yarn") command = `yarn remove ${name}`;
-
-  return command;
+  return args;
 };
 
 /* Uninstall module */
 
-const uninstallModule = ({ name, dev }, notifyMode) => {
+const uninstallModule = async ({ name, dev }, notifyMode) => {
   if (dev) return;
+  const args = await getUninstallCommand(name);
+  const message = `Uninstalling ${colors.red(name)}`;
 
-  const command = getUninstallCommand(name);
-  const message = `${name} removed`;
-
-  const spinner = startSpinner(`${colors.red("Uninstalling")} ${name}`, "red");
-  runCommand(command);
-  stopSpinner(spinner, message, "red", notifyMode);
+  taskRunner(args, name, message, notifyMode);
 };
 
 /* Remove built in/native modules */
@@ -355,11 +349,15 @@ const diff = (first, second) => {
 
 /* Reinstall modules */
 
-const cleanup = () => {
-  let spinner = startSpinner(colors.yellow("Cleaning up\n"), "green");
-  if (argv.yarn) runCommand("yarn");
-  else runCommand("npm install");
-  stopSpinner(spinner);
+const cleanup = async () => {
+  const cmd = await whichPackageManager();
+  const message = colors.yellow("Cleaning up");
+  const name = `Dependencies`;
+
+  let args;
+  if (cmd === "npm" || cmd === "pnpm" || cmd === "yarn") args = [`install`];
+
+  taskRunner(args, name, message, false);
 };
 
 /* Does package.json exist?
@@ -390,7 +388,7 @@ module.exports = {
   getInstalledModules,
   getUsedModules,
   filterRegistryModules,
-  installModulesandScopedModules,
+  installModules,
   uninstallModule,
   diff,
   cleanup,

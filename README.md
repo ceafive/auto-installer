@@ -18,11 +18,11 @@ Modules in `.spec.js` and `.test.js` are added to `devDependencies`
 
 #### Options
 
+**You can add these optional flags**
+
 `--exact` Install exact version similar to `npm install express --save-exact`
 
-`--dont-uninstall` Do not uninstall unused modules
-
-`--yarn` Use [yarn](https://yarnpkg.com) instead of npm
+`--uninstall` Uninstall unused modules
 
 `--notify` Enable notifications for when dependencies are installed or uninstalled
 

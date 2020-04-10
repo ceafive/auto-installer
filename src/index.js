@@ -13,14 +13,15 @@ let main;
 let notifyMode = false;
 if (argv["notify"]) notifyMode = true;
 
-let uninstallMode = true;
-if (argv["dont-uninstall"]) uninstallMode = false;
+let uninstallMode = false;
+if (argv["uninstall"]) uninstallMode = true;
 
 /* Watch files and repeat drill
  * Add a watcher, call main wrapper to repeat cycle
  */
 
 let initializeWatchers = () => {
+  // console.log(__dirname);
   let watcher = chokidar.watch(helpers.getFilesPath());
   watcher.on("change", main).on("unlink", main);
 
@@ -53,15 +54,16 @@ main = () => {
 
   if (uninstallMode) {
     let unusedModules = helpers.diff(installedModules, usedModules);
-    for (let module of unusedModules)
+    for (let module of unusedModules) {
       helpers.uninstallModule(module, notifyMode);
+    }
   }
 
   // installModules
 
   let modulesNotInstalled = helpers.diff(usedModules, installedModules);
   for (let module of modulesNotInstalled) {
-    helpers.installModulesandScopedModules(module, notifyMode);
+    helpers.installModules(module, notifyMode);
   }
 
   helpers.cleanup();

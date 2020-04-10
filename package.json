@@ -18,30 +18,29 @@
   "scripts": {
     "build": "babel src -d lib",
     "test": "jest ",
-    "test:watch": "jest --watch",
     "noderun": "node src/helpers",
+    "nodedetective": "node src/helpers",
     "nodemon": "nodemon src/helpers"
   },
   "dependencies": {
     "chokidar": "2.0.0",
     "colors": "1.1.2",
-    "detective": "5.0.2",
-    "detective-es6": "1.2.0",
-    "glob": "7.1.0",
+    "execa": "^4.0.0",
+    "glob": "^7.1.1",
     "is-builtin-module": "1.0.0",
-    "lodash": "^4.17.15",
-    "log-symbols": "1.0.2",
+    "listr": "^0.14.3",
     "node-notifier": "^6.0.0",
-    "ora": "0.3.0",
+    "node-source-walk": "^4.2.0",
     "package-json": "2.4.0",
     "vue-template-compiler": "^2.6.11",
+    "which-pm": "^2.0.0",
     "yargs": "6.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
-    "babel-preset-env": "^1.7.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "jest": "^25.2.7"
   }
 }
