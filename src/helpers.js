@@ -89,8 +89,12 @@ const getModulesFromFile = (path) => {
   try {
     //sniff file for ES6 import statements
     allModules = detective(output, detectiveOptions);
+    // filter modules;
+    allModules = allModules.filter((module) => isValidModule(module));
   } catch (err) {
-    if (err.includes) handleError(err);
+    const line = content.split("\n")[err.loc.line - 1];
+    const error = `Babel parser error. Could not parse '${path}'. There is a syntax error in file at line ${err.loc.line} column: ${err.loc.column}\ncausing all modules used in this file ONLY to be uninstalled`;
+    handleError(error);
   }
 
   // return filtered modules;
@@ -172,14 +176,16 @@ const getUsedModules = () => {
 const handleError = (err, moduleName = "") => {
   if (typeof err === "string" && err.includes("E404")) {
     console.log(
-      colors.yellow(`${colors.green(moduleName)} is not in the npm registry.`)
+      colors.red("Error ==>"),
+      `${colors.red(moduleName)} is not in the npm registry.`
     );
   } else if (typeof err === "string" && err.includes("ENOTFOUND")) {
     console.log(
-      colors.red("Could not connect to npm, check your internet connection!")
+      colors.red("Error ==>"),
+      "Could not connect to npm, check your internet connection!"
     );
   } else {
-    console.log("Error", `${colors.red(err)}`);
+    console.log(colors.red("Error ==>"), err);
   }
 };
 
@@ -232,7 +238,8 @@ const runCommand = async (args, moduleName, notifyMode) => {
   if (found) message = `${moduleName} removed`;
 
   try {
-    execa.sync(cmd, args);
+    const cp = await execa.sync(cmd, args);
+    console.log(colors.green("Added ==>"), cp.stdout.split("\n")[0]);
     if (notifyMode) showNotification(message);
   } catch (err) {
     if (notifyMode) showNotification(`Error installing ${moduleName}`);
@@ -281,7 +288,9 @@ const installModules = ({ name, dev }, notifyMode) => {
   if (isScopedModule(name)) {
     packageJson(name)
       .then(() => installModule({ name, dev }, notifyMode))
-      .catch((e) => handleError(e.name));
+      .catch((err) => {
+        // handleError(err.message);
+      });
   } else {
     //install modules found in npm registry
     installModule({ name, dev }, notifyMode);

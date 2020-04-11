@@ -14,12 +14,15 @@
   "license": "MIT",
   "main": "src/index.js",
   "bin": "lib/index.js",
-  "author": "Castro Agbo",
+  "author": {
+    "name": "Castro Agbo",
+    "email": "ceafive@gmail.com",
+    "url": "ceafive.netlify.com"
+  },
   "scripts": {
     "build": "babel src -d lib",
     "test": "jest ",
     "noderun": "node src/helpers",
-    "nodedetective": "node src/helpers",
     "nodemon": "nodemon src/helpers"
   },
   "dependencies": {
