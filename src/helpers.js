@@ -9,9 +9,9 @@ const notifier = require("node-notifier");
 const whichpm = require("which-pm");
 const execa = require("execa");
 const Listr = require("listr");
+const Walker = require("node-source-walk");
 
-const detective = require("./detective");
-require("../node_modules/regenerator-runtime/runtime");
+require("regenerator-runtime/runtime");
 
 /* File reader
  * Return contents of given file
@@ -64,6 +64,44 @@ const isValidModule = (name) => {
   // let regex = new RegExp("^([a-z0-9-_]{1,})$");
   let regex = new RegExp("^([@a-z0-9-_/]{1,})$");
   return regex.test(name);
+};
+
+/* Parses through file to extract dependencies used in file
+ * Return array of dependencies
+ */
+
+const detective = (src, options) => {
+  const walker = new Walker();
+
+  const dependencies = [];
+
+  walker.walk(src, (node) => {
+    switch (node.type) {
+      case "ImportDeclaration":
+        if (options && options.skipTypeImports && node.importKind == "type") {
+          break;
+        }
+        if (!node.source) {
+          return dependencies;
+        }
+        if (node.source && node.source.value) {
+          dependencies.push(node.source.value);
+        }
+        break;
+      case "CallExpression":
+        const args = node.arguments;
+        if (node.callee.name === "require" && args.length) {
+          dependencies.push(args[0].value);
+        }
+        if (node.callee.type === "Import" && args.length) {
+          dependencies.push(args[0].value);
+        }
+      default:
+        return;
+    }
+  });
+
+  return dependencies;
 };
 
 /* Find modules from file
