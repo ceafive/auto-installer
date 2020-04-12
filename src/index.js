@@ -21,7 +21,7 @@ if (argv["uninstall"]) uninstallMode = true;
  */
 
 let initializeWatchers = () => {
-  let watcher = chokidar.watch(helpers.getFilesPath());
+  let watcher = chokidar.watch(process.cwd());
   watcher.on("change", main).on("unlink", main);
 
   watchersInitialized = true;

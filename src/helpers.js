@@ -268,17 +268,21 @@ const getInstallCommand = async (name, dev) => {
 
 const runCommand = async (args, moduleName, notifyMode) => {
   const cmd = await whichPackageManager();
+  //message to send to 'showNotificaiton' for popup display
   let message = `${moduleName} installed`;
-
   const found = args.find(
     (e) => e.includes("uninstall") || e.includes("remove")
   );
+  //to display this message to 'showNotification' when found is true
   if (found) message = `${moduleName} removed`;
 
   try {
-    const cp = await execa.sync(cmd, args);
-    console.log(colors.green("Added ==>"), cp.stdout.split("\n")[0]);
+    const cp = execa.sync(cmd, args);
+    //conditional so Cleanup funciton doesn't display any messages to console
+
     if (notifyMode) showNotification(message);
+    if (moduleName)
+      console.log(colors.green("Added ==>"), cp.stdout.split("\n")[0]);
   } catch (err) {
     if (notifyMode) showNotification(`Error installing ${moduleName}`);
     handleError(err.stderr, moduleName);
@@ -399,7 +403,7 @@ const diff = (first, second) => {
 const cleanup = async () => {
   const cmd = await whichPackageManager();
   const message = colors.yellow("Cleaning up");
-  const name = `Dependencies`;
+  const name = ``;
 
   let args;
   if (cmd === "npm" || cmd === "pnpm" || cmd === "yarn") args = [`install`];
