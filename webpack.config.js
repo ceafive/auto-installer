@@ -10,10 +10,10 @@ module.exports = {
     filename: "[name].js",
     path: path.resolve(__dirname, "lib"),
   },
-  // stats: {
-  //   // Ignore warnings due to yarg's dynamic module loading
-  //   warningsFilter: [/node_modules\/yargs/],
-  // },
+  stats: {
+    // Ignore warnings due to yarg's dynamic module loading
+    warningsFilter: [/node_modules\/yargs/],
+  },
   plugins: [
     new webpack.BannerPlugin({ banner: "#!/usr/bin/env node", raw: true }),
   ],
