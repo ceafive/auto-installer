@@ -1,32 +1,31 @@
-#!/usr/bin/env node
+import * as helpers from "./helpers"
+import chokidar from "chokidar"
+import colors from "colors"
+import { argv } from "yargs"
 
-const helpers = require("./helpers");
-const chokidar = require("chokidar");
-const colors = require("colors");
-const argv = require("yargs").argv;
-
-let watchersInitialized = false;
-let main;
+let watchersInitialized = false
+let main
 
 /* Notify mode */
 
-let notifyMode = false;
-if (argv["notify"]) notifyMode = true;
+let notifyMode = false
+if (argv["notify"]) notifyMode = true
 
-let uninstallMode = false;
-if (argv["uninstall"]) uninstallMode = true;
+let uninstallMode = false
+if (argv["uninstall"]) uninstallMode = true
 
 /* Watch files and repeat drill
  * Add a watcher, call main wrapper to repeat cycle
  */
 
 let initializeWatchers = () => {
-  let watcher = chokidar.watch(process.cwd());
-  watcher.on("change", main).on("unlink", main);
+  const allFilePaths = helpers.getFilesPath()
+  let watcher = chokidar.watch(allFilePaths)
+  watcher.on("change", main).on("unlink", main)
 
-  watchersInitialized = true;
-  console.log(colors.green("Watchers initialized"));
-};
+  watchersInitialized = true
+  console.log(colors.green("Watchers initialized"))
+}
 
 /* Main wrapper
  * Get installed modules from package.json
@@ -38,36 +37,34 @@ let initializeWatchers = () => {
 
 main = () => {
   if (!helpers.packageJSONExists()) {
-    console.log(colors.red("package.json does not exist"));
-    console.log(colors.red("You can create one by using `npm init`"));
-    return;
+    console.log(colors.red("package.json does not exist"))
+    console.log(colors.red("You can create one by using `npm init`"))
+    return
   }
 
-  let installedModules = [];
-  installedModules = helpers.getInstalledModules();
+  let installedModules = helpers.getInstalledModules()
 
-  let usedModules = helpers.getUsedModules();
-  usedModules = helpers.filterRegistryModules(usedModules);
+  let usedModules = helpers.filterUsedModules()
 
   // removeUnusedModules
 
   if (uninstallMode) {
-    let unusedModules = helpers.diff(installedModules, usedModules);
+    let unusedModules = helpers.diff(installedModules, usedModules)
     for (let module of unusedModules) {
-      helpers.uninstallModule(module, notifyMode);
+      helpers.uninstallModule(module, notifyMode)
     }
   }
 
-  // installModules
+  // installAllModules
 
-  let modulesNotInstalled = helpers.diff(usedModules, installedModules);
+  let modulesNotInstalled = helpers.diff(usedModules, installedModules)
   for (let module of modulesNotInstalled) {
-    helpers.installModules(module, notifyMode);
+    helpers.installScopedModules(module, notifyMode)
   }
 
-  helpers.cleanup();
-  if (!watchersInitialized) initializeWatchers();
-};
+  helpers.cleanup()
+  if (!watchersInitialized) initializeWatchers()
+}
 
 /* Turn the key */
-main();
+main()

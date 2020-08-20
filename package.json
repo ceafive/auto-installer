@@ -1,6 +1,6 @@
 {
   "name": "auto-installer",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "description": "an auto installer for node packages as you code",
   "keywords": [
     "auto",
@@ -17,33 +17,47 @@
   "author": {
     "name": "Castro Agbo",
     "email": "ceafive@gmail.com",
-    "url": "ceafive.netlify.com"
+    "url": "https://ceafive.netlify.app"
   },
   "scripts": {
     "build": "babel src -d lib",
-    "test": "jest ",
+    "test": "jest",
     "noderun": "node src/helpers",
-    "nodemon": "nodemon src/helpers"
+    "nodemon": "node example",
+    "webpack:build": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "chokidar": "2.0.0",
-    "colors": "1.1.2",
+    "@babel/runtime": "^7.11.2",
+    "chokidar": "^3.4.2",
+    "colors": "^1.4.0",
+    "detective": "^5.2.0",
+    "detective-es6": "^2.2.0",
     "execa": "^4.0.0",
     "glob": "^7.1.1",
-    "is-builtin-module": "1.0.0",
+    "is-builtin-module": "^3.0.0",
     "listr": "^0.14.3",
+    "log-symbols": "^4.0.0",
     "node-notifier": "^6.0.0",
     "node-source-walk": "^4.2.0",
-    "package-json": "2.4.0",
+    "object-observer": "^2.9.3",
+    "ora": "^5.0.0",
+    "package-json": "^6.5.0",
     "vue-template-compiler": "^2.6.11",
     "which-pm": "^2.0.0",
     "yargs": "6.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.5",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "jest": "^25.2.7"
+    "@babel/core": "^7.11.1",
+    "@babel/plugin-transform-runtime": "^7.11.0",
+    "@babel/preset-env": "^7.11.0",
+    "babel-loader": "^8.1.0",
+    "jest": "^25.2.7",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-node-externals": "^2.5.1"
+  },
+  "prettier": {
+    "semi": false
   }
 }
