@@ -21,7 +21,7 @@
   },
   "scripts": {
     "build": "babel src -d lib",
-    "test": "jest",
+    "test": "",
     "noderun": "node src/helpers",
     "nodemon": "node example",
     "webpack:build": "webpack --config webpack.config.js"
