@@ -35,7 +35,7 @@
     "is-builtin-module": "^3.0.0",
     "listr": "^0.14.3",
     "log-symbols": "^4.0.0",
-    "node-notifier": "^6.0.0",
+    "node-notifier": "^8.0.1",
     "node-source-walk": "^4.2.0",
     "object-observer": "^2.9.3",
     "ora": "^5.0.0",
